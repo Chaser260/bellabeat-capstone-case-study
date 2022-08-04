@@ -1,0 +1,609 @@
+---
+title: "bellabeat_markdown"
+author: "Chase Carlson"
+date: "2022-08-04"
+output: github_document
+---
+
+## Table of Contents
+
+1.  Introduction
+    -   About the company
+    -   Business task
+    -   Questions to answer
+2.  Prepare the data
+    -   About the data
+    -   Load libraries
+    -   Load data
+    -   File structure & content
+    -   Cleaning the data
+3.  Analyze the data
+    -   Activity by weekday
+    -   Hourly activity
+    -   Use Frequency
+    -   Relationships
+    -   Sleep data
+4.  Recommendations
+5.  Acknowledgements
+
+## 1. Introduction
+
+#### Background
+
+Urška Sršen and Sando Mur founded Bellabeat, a high-tech company that manufactures health-focused smart products. Sršen used her background as an artist to develop beautifully designed technology that informs and inspires women around the world. Collecting data on activity, sleep, stress, and reproductive health has allowed Bellabeat to empower women with knowledge about their own health and habits. Since it was founded in 2013, Bellabeat has grown rapidly and quickly positioned itself as a tech-driven wellness company for women.
+
+By 2016, Bellabeat had opened offices around the world and launched multiple products. Bellabeat products became available through a growing number of online retailers in addition to their own e-commerce channel on their website. The company has invested in traditional advertising media, such as radio, out-of-home billboards, print, and television, but focuses on digital marketing extensively. Bellabeat invests year-round in Google Search, maintaining active Facebook and Instagram pages, and consistently engages consumers on Twitter. Additionally, Bellabeat runs video ads on Youtube and display ads on the Google Display Network to support campaigns around key marketing dates.
+
+Sršen knows that an analysis of Bellabeat's available consumer data would reveal more opportunities for growth. She has asked the marketing analytics team to focus on a Bellabeat product and analyze smart device usage data in order to gain insight into how people are already using their smart devices. Then, using this information, she would like high-level recommendations for how these trends can inform Bellabeat marketing strategy.
+
+#### Business Task
+
+The goal of this analysis is to determine how consumers currently use non-Bellabeat smart devices, and then select one Bellabeat product to apply these insights to in my presentation. Then, using this information, I will provide high-level recommendations for how these trends can inform Bellabeat's marketing strategy.
+
+#### Questions to answer
+
+1.  What are some trends in smart device usage?
+2.  How could these trends apply to Bellabeat customers?
+3.  How could these trends help influence Bellabeat marketing strategy?
+
+## 2. Prepare the data
+
+#### About the data
+
+For this analysis I will use the data set that Sršen recommended: [Fitbit Fitness Tracker Data](https://www.kaggle.com/datasets/arashnic/fitbit), made available by [Möbius](https://www.kaggle.com/arashnic). In this data set thirty three participants consented to the submission of personal tracker data, including minute-level output for physical activity, heart rate, and sleep monitoring. It contains 18 CSV files, This data is limited, in that it does not include demographic information to determine male vs. female, and it has a small sample size of just 33 users. At the time of this analysis, the data set is over 6 years old. Since public fitness tracker data is not readily available, I will be using this data set to analyze tracker data.
+
+#### Load libraries
+
+I'll start by loading the libraries I will need to use for this analysis.
+
+```{r load libraries}
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(readr)
+library(readxl)
+library(hms)
+library(scales)
+library(ggpubr)
+```
+
+#### Load data
+
+Next I opened each file in Excel to get a quick visual glance at all of the files and rename the files for consistency prior to importing. I noticed that the daily_activity table was a summary of several of the other tables, so for this analysis I will focus primarily on the daily_activity, hourly_steps, sleep_day, and weight_log_info data sets.
+
+```{r}
+daily_activity <- read_excel("~/Documents/Coursera/Capstone Project/Fitabase Data 4.12.16-5.12.16/daily_activity.xlsx", 
+    col_types = c("text", "date", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric"))
+hourly_steps <- read_excel("~/Documents/Coursera/Capstone Project/Fitabase Data 4.12.16-5.12.16/hourly_steps.xlsx", 
+    col_types = c("text", "date", "numeric"))
+sleep_day <- read_excel("~/Documents/Coursera/Capstone Project/Fitabase Data 4.12.16-5.12.16/sleep_day.xlsx", 
+    col_types = c("text", "date", "numeric", 
+        "numeric", "numeric"))
+weight_log_info <- read_excel("~/Documents/Coursera/Capstone Project/Fitabase Data 4.12.16-5.12.16/weight_log_info.xlsx", 
+    col_types = c("text", "date", "skip", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "logical", "numeric"))
+```
+
+#### File structure & content
+
+Let's have an overview of the data sets using the summary and glimpse tools.
+
+First the daily_activity data:
+
+```{r daily_activity glimpse}
+glimpse(daily_activity)
+```
+
+```{r daily_activity summary}
+summary(daily_activity)
+```
+
+```{r}
+colnames(daily_activity)
+```
+
+Then the sleep_day data:
+
+```{r sleep_day glimpse}
+glimpse(sleep_day)
+```
+
+```{r sleep_day summary}
+summary(sleep_day)
+```
+
+```{r}
+colnames(sleep_day)
+```
+
+The weight_log data:
+
+```{r weight_log glimpse}
+glimpse(weight_log_info)
+```
+
+```{r weight_log summary}
+summary(weight_log_info)
+```
+
+```{r}
+colnames(weight_log_info)
+```
+
+And the hourly_steps data:
+
+```{r hourly_steps glimpse}
+glimpse(hourly_steps)
+```
+
+```{r hourly_steps summary}
+summary(hourly_steps)
+```
+
+```{r}
+colnames(hourly_steps)
+```
+
+We find:
+
+-   During import I notice that some varialbles wanted to import in the incorrect format, so I manually converted inaccurate classifications during the read_excel process.
+-   Date columns will be renamed for consistency across the data.
+-   In the daily_activity data we see that the minimum total steps is 0, and the maximum sedentary time is 1440, which likely indicates the participant did not wear their device or log any activity for the day.
+-   There are less records in the sleep_day data set than in the daily_activity data set, indicating that not all users recorded sleep information each night.
+-   The weight_log table has significantly fewer records than the other tables, indicating that not all users participated in this feature. I'll be curious to see if this group was more active than the others.
+-   The maximum hourly steps is 10554, which shows this user probably used their device to log exercise.
+-   The time frame of this study ran from 2016-04-12 to 2016-05-12, or 31 days.
+
+#### Cleaning the data
+
+Now I will run some basic cleaning functions on each data set.
+
+##### daily_activity
+
+```{r}
+get_dupes(daily_activity)
+```
+
+There are no duplicated rows in the daily_activity table.
+
+```{r}
+daily_activity <- daily_activity %>%
+  clean_names() %>% 
+  rename(date = activity_date)
+```
+
+I also want to create a separate data frame for some analyses to filter out entire days where participants did not wear their device. This will allow us to see statistics based only on when the device was in use, rather than aggregating 0 steps or 1440 sedentary minutes into our calculations.
+
+```{r}
+daily_activity_filtered <- 
+  daily_activity[daily_activity$total_steps != 0, ]
+```
+
+##### sleep_day
+
+```{r}
+get_dupes(sleep_day)
+```
+
+There are 3 duplicate rows in the sleep_day table. We will remove those.
+
+```{r}
+sleep_day <- sleep_day %>% 
+  clean_names() %>% 
+  rename(date = sleep_day) %>% 
+  distinct()
+```
+
+##### weight_log_info
+
+```{r}
+get_dupes(weight_log_info)
+```
+
+There are no duplicate rows in the weight_log_info table.
+
+```{r}
+weight_log_info <- weight_log_info %>% 
+  clean_names()
+```
+
+##### hourly_steps
+
+```{r}
+get_dupes(hourly_steps)
+```
+
+There are no duplicate rows in the hourly_steps table.
+
+```{r}
+hourly_steps <- hourly_steps %>% 
+  clean_names()
+```
+
+Finally, I want to see how many users are included in each data frame. To do this, I will count the number of distince users in each data frame, and then create a table to see what it looks like.
+
+```{r}
+n_distinct(daily_activity$id)
+n_distinct(hourly_steps$id)
+n_distinct(sleep_day$id)
+n_distinct(weight_log_info$id)
+
+table_names <- c("daily_activity", "hourly_steps", "sleep_day", "weight_log_info")
+unique_participants <- c(33, 33, 24, 8)
+
+distinct_participants <- data.frame(table_names, unique_participants)
+head(distinct_participants) # There are only 8 unique id's who participated in the weight log feature
+```
+
+## 3. Analyze the data
+
+Now that the data is clean and formatted, I will dive in to identify how participants used their devices during this trial.
+
+#### Activity by weekday
+
+The first look into the usage patterns will be to determine which days of the week participants are the most active. In order to see this, I pulled out the day of the week for each date in the daily_activity_filtered data into a new column. Then, I ordered and summarized the data based on day of the week, focusing on steps, calories, very active minutes, and distance:
+
+```{r}
+weekday_daily_activity <- daily_activity_filtered %>%
+  mutate(weekday = weekdays(date))
+
+weekday_daily_activity$weekday <-ordered(weekday_daily_activity$weekday, levels=c("Monday", "Tuesday", "Wednesday", "Thursday",
+                                                                            "Friday", "Saturday", "Sunday"))
+
+weekday_daily_activity <- weekday_daily_activity %>%
+  group_by(weekday) %>%
+  summarize (avg_steps = mean(total_steps), avg_calories = mean(calories), avg_very_active_minutes = mean(very_active_minutes), avg_distance = mean(total_distance))
+
+head(weekday_daily_activity)
+```
+
+Next, calculated the total population average for each variable, and created a visualization to see what it looks like:
+
+```{r Total Population averages}
+avg_steps <- daily_activity_filtered %>% 
+  summarize(mean(total_steps))
+head(avg_steps) # 8319 steps
+
+avg_cal <- daily_activity_filtered %>% 
+  summarize(mean(calories))
+head(avg_cal) # 2361 calories
+
+avg_active_min <- daily_activity_filtered %>% 
+  summarize(mean(very_active_minutes))
+head(avg_active_min) # 23 very active minutes
+
+avg_sedentary_time <- daily_activity_filtered %>% 
+  summarize(mean(sedentary_minutes))
+head(avg_sedentary_time) # 956 minutes
+
+avg_dist <- daily_activity_filtered %>% 
+  summarize(mean(total_distance))
+head(avg_dist) # 5.98 miles
+```
+
+```{r}
+ggarrange(
+ggplot(weekday_daily_activity) + 
+  geom_col(aes(weekday, avg_steps), fill = "#205493") +
+  labs(x = NULL, y = "Average Steps", title = "Average Steps") +
+  geom_hline(yintercept = 8319) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5),
+        plot.title = element_text(face = "bold")) +
+  scale_y_continuous(expand = c(0,0)), 
+ggplot(weekday_daily_activity) +
+  geom_col(aes(weekday, avg_calories), fill = "#26C6DA") +
+  labs(x = NULL, y = "Average Calories", title = "Average Calories") +
+  geom_hline(yintercept = 2361) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5),
+        plot.title = element_text(face = "bold")) +
+  scale_y_continuous(expand = c(0,0)),
+ggplot(weekday_daily_activity) +
+  geom_col(aes(weekday, avg_very_active_minutes), fill = "#78909C") +
+  labs(x = NULL, y = "Average Very \nActive Minutes", title = "Average Very Active Minutes") + 
+  geom_hline(yintercept = 23) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5),
+        plot.title = element_text(face = "bold")) +
+  scale_y_continuous(expand = c(0,0)),
+ggplot(weekday_daily_activity) +
+  geom_col(aes(weekday, avg_distance), fill = "#FF9776") +
+  labs(x = NULL, y = "Average Distance", title = "Average Distance") + 
+  geom_hline(yintercept = 5.98) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5),
+        plot.title = element_text(face = "bold")) +
+  scale_y_continuous(expand = c(0,0))
+)
+```
+
+Given this information, we can see that Monday, Tuesday, and Saturday are the most active days, with Friday and Sunday being the least active.
+
+#### Hourly Activity
+
+The next step to analyze user activity is to determine how they use their devices throughout the day. To do this, I had to separate out the time from activity_hour into a separate column, and then group by time, and summarize the average steps for each hour. Then I added a visualization to see what it looks like:
+
+```{r}
+steps_by_hour <- hourly_steps %>% 
+  mutate(hour = format(as.POSIXct(activity_hour),
+                       format = "%H:%M:%S")) %>% 
+  group_by(hour) %>% 
+  summarize(average_steps = mean(step_total)) %>% 
+  ggplot() +
+  geom_col(mapping = aes(x = hour, y =average_steps, fill = average_steps)) +
+  scale_fill_gradient(name="Average Steps") +
+  labs(x = "Activity Hour", y = "Average Steps", title = "Avg Steps By Hour") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.ticks = element_blank())
+steps_by_hour
+```
+
+Based on this column chart, we can see that the most active times of the day are between 12:00-14:00, and from 17:00-19:00, suggesting people tend to experience the highest levels of activity around meal times.
+
+Another way to visualize this information is at the "id" level using a heatmap:
+
+```{r}
+heatmap <- hourly_steps %>% 
+  mutate(hour = format(as.POSIXct(activity_hour),
+                       format = "%H:%M:%S")) %>% 
+  group_by(id, hour) %>% 
+  summarize(avg_steps = mean(step_total), .groups = "drop") %>% 
+  ggplot(aes(x=hour, y=id)) + # y axis has to be in "chr" format to work.
+  geom_tile(aes(fill = avg_steps)) +
+  scale_fill_gradient(name = "Average Steps", 
+                      low = "#FFFFFF",
+                      high = "#FF0000") +
+  labs(x = NULL, y = NULL, title = "Activity Heatmap") +
+  theme_classic() +
+  theme(plot.title.position = "plot",
+        plot.title = element_text(face = "bold", margin = margin(b=10)),
+        axis.text.x = element_text(angle = 90),
+        legend.title.align = 0.5,
+        legend.margin = margin(l = 10),
+        axis.ticks = element_blank())
+  
+heatmap
+```
+
+This visualizations allows us to see that there were only a few highly active people (over 3000 steps/hr) in this group. We also get a sense that most users get up and start being active around 07:00, but others seem to sleep a little longer and stay active later. Also, some users were highly inactive throughout the entire day.
+
+#### Use Frequency
+
+Because I noticed a difference of 77 observations when I filtered out users with 0 activity, I want to see how often people actually used their device during the 1 month period.To do this, I will classify users by Low use (1-10 days), Moderate use (11-20 days), and High use (21-31 days) categories.
+
+```{r}
+device_usage <- daily_activity %>% 
+  filter(total_steps > 0) %>% 
+  count(id, name = "days_used", sort = TRUE) %>% 
+  mutate(use_category = case_when(days_used <= 10 ~ "Low Use - 1-10 days", 
+                                  days_used > 10 & days_used <= 20 ~ "Moderate Use - 11-20 days", 
+                                  TRUE ~ "High Use - 21-31 days" ))
+head(device_usage)
+tail(device_usage)
+```
+
+Next, I will compute percentages and set up the data frame for visualization:
+
+```{r}
+device_usage_percentage <- device_usage %>% 
+  group_by(use_category) %>% 
+  summarize(number_of_users = n()) %>% 
+  mutate(percent_of_users = number_of_users/sum(number_of_users), 
+         ymax = cumsum(percent_of_users), 
+         ymin = c(0, head(ymax, n=-1)), 
+         label_position = (ymax + ymin)/2, 
+         label = paste0(scales::percent(percent_of_users))) %>%
+  arrange(desc(percent_of_users))
+
+head(device_usage_percentage)
+```
+
+Here is the result:
+
+```{r}
+device_usage <- device_usage_percentage %>% 
+  mutate(use_category = factor(use_category),
+         use_category = fct_reorder(use_category, percent_of_users, .desc = TRUE)) %>%
+  ggplot(aes(ymin = ymin, ymax = ymax,fill = use_category,
+             xmin= 0, xmax = 2)) + 
+  geom_rect() +
+  scale_fill_manual(values = c("#006C7A", "#FFBEA9", "#78909C"), name = "Use Category") +
+  theme_classic() +
+  geom_text(aes(x = 1, y = label_position, label = label, fontface = "bold")) +
+  theme(text = element_text(size = 15),
+        axis.ticks = element_blank(),
+        plot.title = element_text(face = "bold", margin= margin(b=10))) +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(x = NULL, y = NULL, title = "Device Usage")
+
+device_usage
+```
+
+These results show that only 76% of users logged activity more than 21 days during the study period, 21% logged activity between 11-20 days, and 3% (one participant), used the device less than 10 days.
+
+Possible reasons for not wearing the device may include: \* Aesthetic doesn't go with outfit \* Didn't want to track fitness activity that day \* Forgot to put it on \* Battery life
+
+##### Physical Activity Intensities
+
+Next, I want to see usage statistics relating to exercise, or "active minutes". According to Fitbit, active minutes are "earned through 10 minutes or more of continuous moderate-to-intense activity."^[1](https://help.fitbit.com/articles/en_US/Help_article/1379.htm)^ This will show how many participants incorporated regular exercise into their daily activities.
+
+```{r}
+exercise <- daily_activity_filtered %>% 
+  group_by(id) %>%
+  summarize(avg_active_min = mean(very_active_minutes)) %>% 
+  arrange(desc(avg_active_min))
+
+head(exercise)
+tail(exercise)
+```
+
+Since the recommended amount of active minutes is 30, I will check to see how many met this standard:
+
+```{r}
+recommended_exercise <- exercise %>% 
+  tally((avg_active_min >= 30)/33, name = "avg_active_min") %>% 
+  mutate(percent_over_30 = paste0(scales::percent(avg_active_min)))
+head(recommended_exercise)
+```
+
+24% of participants achieved 30+ very active minutes per day.
+
+#### Correlations
+
+Another aspect we want to look at when analyzing user statistics is the relationships between activities. I also wanted to compare the activity of participants who made the effort to manually track their weight vs. those who did not.
+
+Because sample size is so small, I will join the daily_activity table with the weight_log table to determine which users do not appear in both. Then I will identify and graph the average calories burned, comparing the two groups.
+
+##### **Logged Weight**
+
+```{r}
+logged_weight_calories = daily_activity_filtered %>% 
+  inner_join(weight_log_info, by="id") %>% 
+  summarize(avg_calories = mean(calories))
+head(logged_weight_calories)
+```
+
+List of users who logged weight stats:
+
+```{r}
+logged <- daily_activity_filtered %>% 
+  inner_join(weight_log_info, by="id", "date")
+head(logged)
+```
+
+Confirming accurate join:
+
+```{r}
+n_distinct(logged$id)
+```
+
+A correlation coefficient of 0.80 indicates a strong positive correlation exists between steps and calories for users who logged their weight:
+
+```{r}
+cor.test(logged$total_steps, logged$calories)
+```
+
+##### **Did not log weight**
+
+```{r}
+no_weight_calories = daily_activity_filtered %>%
+  anti_join(weight_log_info, by="id") %>%
+  summarize(avg_calories = mean(calories))
+head(no_weight_calories)
+```
+
+List of users who did not log weight:
+
+```{r}
+did_not_log <- daily_activity_filtered %>% 
+  anti_join(weight_log_info, by="id")
+
+head(did_not_log)
+```
+
+Confirming accurate join:
+
+```{r}
+n_distinct(did_not_log$id)
+```
+
+A correlation coefficient of 0.57 indicates a strong positive correlation exists between steps and calories for users who logged their weight. However, there is a stronger relationship for the group who did log their weight stats:
+
+```{r}
+cor.test(did_not_log$total_steps, did_not_log$calories)
+```
+
+Calculate the percentage difference in calorie burn:
+
+```{r}
+percent_difference <- (logged_weight_calories/no_weight_calories)*100
+percent_difference
+```
+
+Visualize relationships:
+
+```{r}
+steps_vs_calories <- 
+  ggplot(data = did_not_log, mapping = aes(x = total_steps, y = calories)) +
+  geom_point(alpha = 0.5, color = "#006C7A") + 
+  geom_point(data = logged, alpha = 0.5, mapping = aes(x = total_steps, y = calories), color = "#FF7043", ) +
+  geom_smooth(data = did_not_log, formula = y~x, method = lm, se = FALSE, aes(color = "#006C7A")) +
+  geom_smooth(data = logged, formula = y~x, method = lm, se = FALSE, aes(color = "#FF7043")) + 
+  theme_classic2() +
+  theme(plot.title = element_text(face = "bold"),
+        plot.subtitle = element_text(size = 10),
+        legend.title = element_blank()) +
+  labs(x = "Total Steps", y = "Calories", 
+       title = "Steps Vs. Calories", 
+       subtitle = "People who manually logged their weight burned 7% more calories \nthan people who did not log their weight") +
+  scale_color_manual(labels = c("Did Not Log Weight", "Logged Weight"),
+                     values = c("#006C7A", "#FF7043"))
+
+steps_vs_calories
+```
+
+We can see from this visualization the relationship between steps and calorie burn. As steps increase, calorie burn also increases. There was a stronger relationship between steps and calories with the group that tracked their own weight than in the group that did not. These results might indicate the importance of having strong performance feedback integrated into the device in a way that motivates customers to be physically active.
+
+#### Sleep Data
+
+The last metric to review is the sleep data.
+
+```{r}
+sleep_day %>%
+  select(total_sleep_records, total_minutes_asleep, total_time_in_bed) %>%
+  summary() 
+```
+
+From this basic summary we can see that the average time in bed was approximately 7.6hrs (458.5/60), and average time asleep was approximately 7hrs (419.2/60). People spent about 36 minutes per day in bed while not sleeping.
+
+```{r}
+sleep <- ggplot(data=sleep_day, 
+       aes(x=total_minutes_asleep, y=total_time_in_bed)) + 
+  geom_point()+
+  theme_classic2() +
+  labs(x = "Minutes Asleep", y = "Time In Bed", title = "Minutes Asleep Vs. Time In Bed")
+
+sleep
+```
+
+## 4. Results
+
+Although this data set has its limitations, we were able to identify some key takeaways that can be valuable in guiding Bellabeat's marketing strategy.
+
+-   We found that people did not wear their devices all the time. Only 76% of users logged activity more than 21 days during the study period, 21% logged activity between 11-20 days, and 3% (one participant), used the device less than 10 days. This data suggests that they may have removed it for a number of reasons which include, but not limited to: battery life, aesthetics, comfort, or forgot to put it on.
+
+-   Even though only 8 participants logged their weight statistics, we can still take away some important information. People who chose to log their weight burned 7% more calories than those who did not. Features that are manual, complex, or difficult to use or receive feedback are less likely to be used by the customer. The more automated the device can be, by itself or with companion products (like a weigh scale in this case), the higher the potential to reach and motivate the customer.
+
+-   The data showed that people are generally most active around meal times, and the highest activity tends to be at the beginning of the week and on Saturdays.
+
+-   About 24% of the population achieved 30+ very active minutes per day.
+
+-   The participants in this study slept an average of 7 hours per night, with 7.6 hours total time in bed.
+
+## 5. Recommendations
+
+In order to get more accurate data including demographic information, I would strongly encourage collecting additional data, ideally on Bellabeat customers, as well as analyzing customer feedback on existing devices to determine the best path forward.
+
+As part of this analysis, I was asked to select one Bellabeat product to apply my insights to in my presentation. I believe the Bellabeat membership is the best place to focus our attention, as it differentiates Bellabeat from its competitors. The following recommendations are made with the Bellabeat membership in mind:
+
+-   One of the biggest issues with the data in this analysis was lack of participation. The Bellabeat membership's unique features gives customers strong motivation to use their devices. By offering workouts, nutrition, mindfulness techniques, and menstrual cycle support, Bellabeat is able to offer a compelling combination of services that customers can't get from other devices. Also, since the membership is a source of predictable continuous income, it is most imperative to drive continuous improvements to the membership service.
+
+-   With the Bellabeat membership and mobile app, push notifications can be a powerful tool to alert the customer at certain times of the day to perform a certain activity, drink water, or suggest a good meal based on the user's preferences. I recommend using the individualized data for each user to enable highly personalized push notifications around the times when customers need to be thinking about certain activities.
+
+-   Customers love when things are easy. Since weight tracking seemed like the biggest challenge with missing data, but also showed a strong correlation to increased calorie burn, I see an opportunity to make this easier for the customer. Options include in-app reminders to log weight at specific intervals, or, thinking bigger, potentially expand the ecosystem with a new smart fitness scale that automatically syncs with the Bellabeat app and membership service.
+
+-   Bellabeat's elegant designs and long battery life are a compelling reason for customers to keep their devices on all day long. This analysis identified that not all users logged data using their smart device. Sleep data is an important metric for Bellabeat to calculate accurate readiness scores and wellness scores. Bellabeat should include these two factors as part of its marketing strategy to encourage customers to choose Bellabeat devices over the competition.
+
+-   Celebrity endorsements are of course an excellent way to reach new audiences and attract customers. Bellabeat should focus efforts on building more strategic partnerships with popular public figures and athletes who endorse their products. Not only does sponsorship help with brand exposure, but it also can help build customer trust knowing that influential people are wearing them.
+
+## 6. Acknowledgements
+
+1.  <https://help.fitbit.com/articles/en_US/Help_article/1379.htm>

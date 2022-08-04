@@ -700,7 +700,7 @@ ggplot(weekday_daily_activity) +
 )
 ```
 
-![](bellabeat_markdown_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](bellabeat_markdown_files/figure-gfm/weekday%20activity%20plots-1.png)<!-- -->
 
 Given this information, we can see that Monday, Tuesday, and Saturday
 are the most active days, with Friday and Sunday being the least active.
@@ -729,7 +729,7 @@ steps_by_hour <- hourly_steps %>%
 steps_by_hour
 ```
 
-![](bellabeat_markdown_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](bellabeat_markdown_files/figure-gfm/steps%20by%20hour-1.png)<!-- -->
 
 Based on this column chart, we can see that the most active times of the
 day are between 12:00-14:00, and from 17:00-19:00, suggesting people
@@ -761,7 +761,7 @@ heatmap <- hourly_steps %>%
 heatmap
 ```
 
-![](bellabeat_markdown_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](bellabeat_markdown_files/figure-gfm/steps%20heatmap-1.png)<!-- -->
 
 This visualizations allows us to see that there were only a few highly
 active people (over 3000 steps/hr) in this group. We also get a sense
@@ -857,7 +857,7 @@ device_usage <- device_usage_percentage %>%
 device_usage
 ```
 
-![](bellabeat_markdown_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](bellabeat_markdown_files/figure-gfm/visualize%20use%20frequency%20by%20population-1.png)<!-- -->
 
 These results show that only 76% of users logged activity more than 21
 days during the study period, 21% logged activity between 11-20 days,
@@ -871,8 +871,8 @@ doesn’t go with outfit \* Didn’t want to track fitness activity that day
 
 Next, I want to see usage statistics relating to exercise, or “active
 minutes”. According to Fitbit, active minutes are “earned through 10
-minutes or more of continuous moderate-to-intense
-activity.”<sup>[1](https://help.fitbit.com/articles/en_US/Help_article/1379.htm)</sup>
+minutes or more of continuous moderate-to-intense activity.”
+<sup>[1](https://help.fitbit.com/articles/en_US/Help_article/1379.htm)</sup>
 This will show how many participants incorporated regular exercise into
 their daily activities.
 
@@ -909,8 +909,9 @@ tail(exercise)
     ## 5 1844505072         0.190 
     ## 6 2026352035         0.0968
 
-Since the recommended amount of active minutes is 30, I will check to
-see how many met this standard:
+Since the recommended amount of exercise is 30 minutes per
+day<sup>[2](https://www.cdc.gov/physicalactivity/basics/adults/index.htm "cdc.gov")</sup>,
+I will use this as my measurement to see how many met this standard:
 
 ``` r
 recommended_exercise <- exercise %>% 
@@ -1104,7 +1105,7 @@ steps_vs_calories <-
 steps_vs_calories
 ```
 
-![](bellabeat_markdown_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](bellabeat_markdown_files/figure-gfm/visualize%20calorie%20burn%20relationships-1.png)<!-- -->
 
 We can see from this visualization the relationship between steps and
 calorie burn. As steps increase, calorie burn also increases. There was
@@ -1116,7 +1117,9 @@ physically active.
 
 #### Sleep Data
 
-The last metric to review is the sleep data.
+The last metric to review is the sleep data. Since I am unable to test
+the accuracy of the sleep data, it will be best to keep this analysis at
+a very high level at the daily level.
 
 ``` r
 sleep_day %>%
@@ -1147,7 +1150,7 @@ sleep <- ggplot(data=sleep_day,
 sleep
 ```
 
-![](bellabeat_markdown_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+![](bellabeat_markdown_files/figure-gfm/sleep%20scatterplot-1.png)<!-- -->
 
 ## 4. Results
 
@@ -1239,4 +1242,9 @@ recommendations are made with the Bellabeat membership in mind:
 
 ## 6. Acknowledgements
 
-1.  <https://help.fitbit.com/articles/en_US/Help_article/1379.htm>
+1.  "Fitbit Help." *Fitbit MyHelp*,
+    <https://help.fitbit.com/articles/en_US/Help_article/1379.htm.> 
+2.  "How Much Physical Activity Do Adults Need?" *Centers for Disease
+    Control and Prevention*, Centers for Disease Control and Prevention,
+    2 June 2022,
+    <https://www.cdc.gov/physicalactivity/basics/adults/index.htm.> 

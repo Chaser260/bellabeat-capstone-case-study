@@ -103,7 +103,7 @@ glimpse(daily_activity)
 summary(daily_activity)
 ```
 
-```{r check column names}
+```{r check column names daily_activity}
 colnames(daily_activity)
 ```
 
@@ -117,7 +117,7 @@ glimpse(sleep_day)
 summary(sleep_day)
 ```
 
-```{r check column names}
+```{r check column names sleep_day}
 colnames(sleep_day)
 ```
 
@@ -131,7 +131,7 @@ glimpse(weight_log_info)
 summary(weight_log_info)
 ```
 
-```{r check column names}
+```{r check column names weight_log_info}
 colnames(weight_log_info)
 ```
 
@@ -145,7 +145,7 @@ glimpse(hourly_steps)
 summary(hourly_steps)
 ```
 
-```{r check column names}
+```{r check column names hourly_steps}
 colnames(hourly_steps)
 ```
 
@@ -186,7 +186,7 @@ daily_activity_filtered <-
 
 ##### sleep_day
 
-```{r check for duplicates}
+```{r check for duplicates sleep_day}
 get_dupes(sleep_day)
 ```
 
@@ -201,7 +201,7 @@ sleep_day <- sleep_day %>%
 
 ##### weight_log_info
 
-```{r check for duplicates}
+```{r check for duplicates weight_log_info}
 get_dupes(weight_log_info)
 ```
 
@@ -214,7 +214,7 @@ weight_log_info <- weight_log_info %>%
 
 ##### hourly_steps
 
-```{r check for duplicates}
+```{r check for duplicates hourly_steps}
 get_dupes(hourly_steps)
 ```
 
@@ -481,13 +481,13 @@ head(logged)
 
 Confirming accurate join:
 
-```{r confirm join}
+```{r confirm join logged weight table}
 n_distinct(logged$id)
 ```
 
 A correlation coefficient of 0.80 indicates a strong positive correlation exists between steps and calories for users who logged their weight:
 
-```{r pearson correlation test}
+```{r pearson correlation test logged weight}
 cor.test(logged$total_steps, logged$calories)
 ```
 
@@ -511,13 +511,13 @@ head(did_not_log)
 
 Confirming accurate join:
 
-```{r confirm join}
+```{r confirm join did not log weight table}
 n_distinct(did_not_log$id)
 ```
 
 A correlation coefficient of 0.57 indicates a strong positive correlation exists between steps and calories for users who logged their weight. However, there is a stronger relationship for the group who did log their weight stats:
 
-```{r pearson correlation test}
+```{r pearson correlation test did not log}
 cor.test(did_not_log$total_steps, did_not_log$calories)
 ```
 

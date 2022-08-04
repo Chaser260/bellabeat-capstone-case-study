@@ -71,7 +71,7 @@ library(ggpubr)
 
 Next I opened each file in Excel to get a quick visual glance at all of the files and rename the files for consistency prior to importing. I noticed that the daily_activity table was a summary of several of the other tables, so for this analysis I will focus primarily on the daily_activity, hourly_steps, sleep_day, and weight_log_info data sets.
 
-```{r}
+```{r Load data}
 daily_activity <- read_excel("~/Documents/Coursera/Capstone Project/Fitabase Data 4.12.16-5.12.16/daily_activity.xlsx", 
     col_types = c("text", "date", "numeric", 
         "numeric", "numeric", "numeric", 
@@ -103,7 +103,7 @@ glimpse(daily_activity)
 summary(daily_activity)
 ```
 
-```{r}
+```{r check column names}
 colnames(daily_activity)
 ```
 
@@ -117,7 +117,7 @@ glimpse(sleep_day)
 summary(sleep_day)
 ```
 
-```{r}
+```{r check column names}
 colnames(sleep_day)
 ```
 
@@ -131,7 +131,7 @@ glimpse(weight_log_info)
 summary(weight_log_info)
 ```
 
-```{r}
+```{r check column names}
 colnames(weight_log_info)
 ```
 
@@ -145,7 +145,7 @@ glimpse(hourly_steps)
 summary(hourly_steps)
 ```
 
-```{r}
+```{r check column names}
 colnames(hourly_steps)
 ```
 
@@ -165,13 +165,13 @@ Now I will run some basic cleaning functions on each data set.
 
 ##### daily_activity
 
-```{r}
+```{r check duplicates daily_activity}
 get_dupes(daily_activity)
 ```
 
 There are no duplicated rows in the daily_activity table.
 
-```{r}
+```{r clean daily_activity}
 daily_activity <- daily_activity %>%
   clean_names() %>% 
   rename(date = activity_date)
@@ -179,20 +179,20 @@ daily_activity <- daily_activity %>%
 
 I also want to create a separate data frame for some analyses to filter out entire days where participants did not wear their device. This will allow us to see statistics based only on when the device was in use, rather than aggregating 0 steps or 1440 sedentary minutes into our calculations.
 
-```{r}
+```{r daily_activity filter}
 daily_activity_filtered <- 
   daily_activity[daily_activity$total_steps != 0, ]
 ```
 
 ##### sleep_day
 
-```{r}
+```{r check for duplicates}
 get_dupes(sleep_day)
 ```
 
 There are 3 duplicate rows in the sleep_day table. We will remove those.
 
-```{r}
+```{r clean sleep_day}
 sleep_day <- sleep_day %>% 
   clean_names() %>% 
   rename(date = sleep_day) %>% 
@@ -201,33 +201,33 @@ sleep_day <- sleep_day %>%
 
 ##### weight_log_info
 
-```{r}
+```{r check for duplicates}
 get_dupes(weight_log_info)
 ```
 
 There are no duplicate rows in the weight_log_info table.
 
-```{r}
+```{r clean weight_log_info}
 weight_log_info <- weight_log_info %>% 
   clean_names()
 ```
 
 ##### hourly_steps
 
-```{r}
+```{r check for duplicates}
 get_dupes(hourly_steps)
 ```
 
 There are no duplicate rows in the hourly_steps table.
 
-```{r}
+```{r clean hourly_steps}
 hourly_steps <- hourly_steps %>% 
   clean_names()
 ```
 
 Finally, I want to see how many users are included in each data frame. To do this, I will count the number of distince users in each data frame, and then create a table to see what it looks like.
 
-```{r}
+```{r distinct users}
 n_distinct(daily_activity$id)
 n_distinct(hourly_steps$id)
 n_distinct(sleep_day$id)
@@ -248,7 +248,7 @@ Now that the data is clean and formatted, I will dive in to identify how partici
 
 The first look into the usage patterns will be to determine which days of the week participants are the most active. In order to see this, I pulled out the day of the week for each date in the daily_activity_filtered data into a new column. Then, I ordered and summarized the data based on day of the week, focusing on steps, calories, very active minutes, and distance:
 
-```{r}
+```{r view weekday activity}
 weekday_daily_activity <- daily_activity_filtered %>%
   mutate(weekday = weekdays(date))
 
@@ -286,7 +286,7 @@ avg_dist <- daily_activity_filtered %>%
 head(avg_dist) # 5.98 miles
 ```
 
-```{r}
+```{r weekday activity plots}
 ggarrange(
 ggplot(weekday_daily_activity) + 
   geom_col(aes(weekday, avg_steps), fill = "#205493") +
@@ -329,7 +329,7 @@ Given this information, we can see that Monday, Tuesday, and Saturday are the mo
 
 The next step to analyze user activity is to determine how they use their devices throughout the day. To do this, I had to separate out the time from activity_hour into a separate column, and then group by time, and summarize the average steps for each hour. Then I added a visualization to see what it looks like:
 
-```{r}
+```{r steps by hour}
 steps_by_hour <- hourly_steps %>% 
   mutate(hour = format(as.POSIXct(activity_hour),
                        format = "%H:%M:%S")) %>% 
@@ -349,7 +349,7 @@ Based on this column chart, we can see that the most active times of the day are
 
 Another way to visualize this information is at the "id" level using a heatmap:
 
-```{r}
+```{r steps heatmap}
 heatmap <- hourly_steps %>% 
   mutate(hour = format(as.POSIXct(activity_hour),
                        format = "%H:%M:%S")) %>% 
@@ -378,7 +378,7 @@ This visualizations allows us to see that there were only a few highly active pe
 
 Because I noticed a difference of 77 observations when I filtered out users with 0 activity, I want to see how often people actually used their device during the 1 month period.To do this, I will classify users by Low use (1-10 days), Moderate use (11-20 days), and High use (21-31 days) categories.
 
-```{r}
+```{r classify users by use frequency}
 device_usage <- daily_activity %>% 
   filter(total_steps > 0) %>% 
   count(id, name = "days_used", sort = TRUE) %>% 
@@ -391,7 +391,7 @@ tail(device_usage)
 
 Next, I will compute percentages and set up the data frame for visualization:
 
-```{r}
+```{r calculate use percentages}
 device_usage_percentage <- device_usage %>% 
   group_by(use_category) %>% 
   summarize(number_of_users = n()) %>% 
@@ -407,7 +407,7 @@ head(device_usage_percentage)
 
 Here is the result:
 
-```{r}
+```{r visualize use frequency by population}
 device_usage <- device_usage_percentage %>% 
   mutate(use_category = factor(use_category),
          use_category = fct_reorder(use_category, percent_of_users, .desc = TRUE)) %>%
@@ -433,9 +433,9 @@ Possible reasons for not wearing the device may include: \* Aesthetic doesn't go
 
 ##### Physical Activity Intensities
 
-Next, I want to see usage statistics relating to exercise, or "active minutes". According to Fitbit, active minutes are "earned through 10 minutes or more of continuous moderate-to-intense activity."^[1](https://help.fitbit.com/articles/en_US/Help_article/1379.htm)^ This will show how many participants incorporated regular exercise into their daily activities.
+Next, I want to see usage statistics relating to exercise, or "active minutes". According to Fitbit, active minutes are "earned through 10 minutes or more of continuous moderate-to-intense activity." ^[1](https://help.fitbit.com/articles/en_US/Help_article/1379.htm)^ This will show how many participants incorporated regular exercise into their daily activities.
 
-```{r}
+```{r identify very active daily averages}
 exercise <- daily_activity_filtered %>% 
   group_by(id) %>%
   summarize(avg_active_min = mean(very_active_minutes)) %>% 
@@ -445,9 +445,9 @@ head(exercise)
 tail(exercise)
 ```
 
-Since the recommended amount of active minutes is 30, I will check to see how many met this standard:
+Since the recommended amount of exercise is 30 minutes per day^[2](https://www.cdc.gov/physicalactivity/basics/adults/index.htm "cdc.gov")^, I will use this as my measurement to see how many met this standard:
 
-```{r}
+```{r calculate exercise}
 recommended_exercise <- exercise %>% 
   tally((avg_active_min >= 30)/33, name = "avg_active_min") %>% 
   mutate(percent_over_30 = paste0(scales::percent(avg_active_min)))
@@ -464,7 +464,7 @@ Because sample size is so small, I will join the daily_activity table with the w
 
 ##### **Logged Weight**
 
-```{r}
+```{r logged weight table}
 logged_weight_calories = daily_activity_filtered %>% 
   inner_join(weight_log_info, by="id") %>% 
   summarize(avg_calories = mean(calories))
@@ -473,7 +473,7 @@ head(logged_weight_calories)
 
 List of users who logged weight stats:
 
-```{r}
+```{r logged weight list}
 logged <- daily_activity_filtered %>% 
   inner_join(weight_log_info, by="id", "date")
 head(logged)
@@ -481,19 +481,19 @@ head(logged)
 
 Confirming accurate join:
 
-```{r}
+```{r confirm join}
 n_distinct(logged$id)
 ```
 
 A correlation coefficient of 0.80 indicates a strong positive correlation exists between steps and calories for users who logged their weight:
 
-```{r}
+```{r pearson correlation test}
 cor.test(logged$total_steps, logged$calories)
 ```
 
 ##### **Did not log weight**
 
-```{r}
+```{r did not log weight table}
 no_weight_calories = daily_activity_filtered %>%
   anti_join(weight_log_info, by="id") %>%
   summarize(avg_calories = mean(calories))
@@ -502,7 +502,7 @@ head(no_weight_calories)
 
 List of users who did not log weight:
 
-```{r}
+```{r did not log weight list}
 did_not_log <- daily_activity_filtered %>% 
   anti_join(weight_log_info, by="id")
 
@@ -511,26 +511,26 @@ head(did_not_log)
 
 Confirming accurate join:
 
-```{r}
+```{r confirm join}
 n_distinct(did_not_log$id)
 ```
 
 A correlation coefficient of 0.57 indicates a strong positive correlation exists between steps and calories for users who logged their weight. However, there is a stronger relationship for the group who did log their weight stats:
 
-```{r}
+```{r pearson correlation test}
 cor.test(did_not_log$total_steps, did_not_log$calories)
 ```
 
 Calculate the percentage difference in calorie burn:
 
-```{r}
+```{r difference in calorie burn}
 percent_difference <- (logged_weight_calories/no_weight_calories)*100
 percent_difference
 ```
 
 Visualize relationships:
 
-```{r}
+```{r visualize calorie burn relationships}
 steps_vs_calories <- 
   ggplot(data = did_not_log, mapping = aes(x = total_steps, y = calories)) +
   geom_point(alpha = 0.5, color = "#006C7A") + 
@@ -554,9 +554,9 @@ We can see from this visualization the relationship between steps and calorie bu
 
 #### Sleep Data
 
-The last metric to review is the sleep data.
+The last metric to review is the sleep data. Since I am unable to test the accuracy of the sleep data, it will be best to keep this analysis at a very high level at the daily level.
 
-```{r}
+```{r summary}
 sleep_day %>%
   select(total_sleep_records, total_minutes_asleep, total_time_in_bed) %>%
   summary() 
@@ -564,7 +564,7 @@ sleep_day %>%
 
 From this basic summary we can see that the average time in bed was approximately 7.6hrs (458.5/60), and average time asleep was approximately 7hrs (419.2/60). People spent about 36 minutes per day in bed while not sleeping.
 
-```{r}
+```{r sleep scatterplot}
 sleep <- ggplot(data=sleep_day, 
        aes(x=total_minutes_asleep, y=total_time_in_bed)) + 
   geom_point()+
@@ -606,4 +606,5 @@ As part of this analysis, I was asked to select one Bellabeat product to apply m
 
 ## 6. Acknowledgements
 
-1.  <https://help.fitbit.com/articles/en_US/Help_article/1379.htm>
+1.  \"Fitbit Help.\" *Fitbit MyHelp*, <https://help.fitbit.com/articles/en_US/Help_article/1379.htm.> 
+2.  \"How Much Physical Activity Do Adults Need?\" *Centers for Disease Control and Prevention*, Centers for Disease Control and Prevention, 2 June 2022, <https://www.cdc.gov/physicalactivity/basics/adults/index.htm.> 

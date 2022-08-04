@@ -1238,7 +1238,7 @@ recommendations are made with the Bellabeat membership in mind:
     building more strategic partnerships with popular public figures and
     athletes who endorse their products. Not only does sponsorship help
     with brand exposure, but it also can help build customer trust
-    knowing that influential people are wearing them.
+    knowing that influential people are wearing them. 
 
 ## 6. Acknowledgements
 

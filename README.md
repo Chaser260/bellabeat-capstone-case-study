@@ -1,4 +1,4 @@
-## 1. Introduction
+## Bellabeat Case Study Overview
 
 #### Background
 

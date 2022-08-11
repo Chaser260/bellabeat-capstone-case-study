@@ -20,9 +20,10 @@ output: github_document
 3.  Analyze the data
     -   Activity by weekday
     -   Hourly activity
-    -   Use Frequency
+    -   Use frequency
     -   Relationships
     -   Sleep data
+    -   Additional insights
 4.  Recommendations
 5.  Acknowledgements
 
@@ -50,7 +51,7 @@ The goal of this analysis is to determine how consumers currently use non-Bellab
 
 #### About the data
 
-For this analysis I will use the data set that Sršen recommended: [Fitbit Fitness Tracker Data](https://www.kaggle.com/datasets/arashnic/fitbit), made available by [Möbius](https://www.kaggle.com/arashnic). In this data set thirty three participants consented to the submission of personal tracker data, including minute-level output for physical activity, heart rate, and sleep monitoring. It contains 18 CSV files, This data is limited, in that it does not include demographic information to determine male vs. female, and it has a small sample size of just 33 users. At the time of this analysis, the data set is over 6 years old. Since public fitness tracker data is not readily available, I will be using this data set to analyze tracker data.
+For this analysis I will use the data set that Sršen recommended: [Fitbit Fitness Tracker Data](https://www.kaggle.com/datasets/arashnic/fitbit), made available by [Möbius](https://www.kaggle.com/arashnic). In this data set thirty three participants consented to the submission of personal tracker data, including minute-level output for physical activity, heart rate, and sleep monitoring. It contains 18 CSV files, This data is limited, in that it does not include demographic information to determine male vs. female, and it has a small sample size of just 33 users. At the time of this analysis, the data set is over 6 years old. Since public fitness tracker data is not readily available, I will be using this data set to analyze tracker data, along with data and insights I am able to gather from various web sources such as CDC.gov and Bellabeat's website.
 
 #### Load libraries
 
@@ -574,6 +575,102 @@ sleep <- ggplot(data=sleep_day,
 sleep
 ```
 
+#### Additional Insights
+
+The next thing I wanted to do was to check customer sentiment on a current Bellabeat product to get a feel for their position to market a trusted device. For this, I analyzed 1483 Amazon.com product reviews for the Leaf Urban tracker to get an idea of what customers like about their devices. I found that pulling insights from the review titles gave good insights, since this is where most reviewers give their initial opinions with strong keywords.
+
+To do text analysis, I had to load some additional libraries and import the reviews file:
+
+```{r Load text analysis libraries}
+library(reshape2)
+library(tm) # text analytics - text mining
+library(wordcloud) # create wordcloud
+library(syuzhet) # to analyze sentiment
+library(RColorBrewer)
+```
+
+```{r}
+reviews <- read_csv("Data Files/reviews.csv", 
+                               col_types = cols(date = col_date(format = "%Y-%M-%d")))
+
+# Check the structure of the file
+str(reviews)
+```
+
+Now that the data is loaded, I will create a corpus to set up for text analysis, and cleaned it up by removing punctuation, numbers, stopwords, and converted all of the text to lower case:
+
+```{r create corpus}
+corpus <- iconv(reviews$title)
+
+corpus <- Corpus(VectorSource(corpus))
+
+inspect(corpus[1:5])
+```
+
+```{r cleaning corpus}
+corpus <- tm_map(corpus, tolower) 
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+corpus <- tm_map(corpus, removeWords, c("tracker", "leaf", "bellabeat")) #remove top used words that are not descriptive
+inspect(corpus[1:5])
+reviews_final <- corpus
+```
+
+Then, I used this corpus to generate a term document to quickly visualize top word usage.
+
+```{r Term document}
+tdm <- TermDocumentMatrix(reviews_final)
+tdm <- as.matrix(tdm)
+tdm[1:20, 1:5]
+```
+
+This is the result. Clearly the word "love" was used a lot to describe the device in customer reviews, which is a good sign for overall sentiment.
+
+```{r bar graph}
+wordplot <- rowSums(tdm) #sum the number of times each word occurs
+wordplot <- subset(wordplot, wordplot>=25)
+barplot(wordplot, las = 2, col = "blue")
+```
+
+Next, I created a wordcloud to visualize a little differently.
+
+```{r word cloud}
+wc <- sort(rowSums(tdm), decreasing = T)
+set.seed(2000)
+wordcloud(words = names(wc),
+          freq = wc,
+          max.words = 75,
+          random.order = F,
+          min.freq = 10,
+          colors = brewer.pal(8, "Dark2"),
+          scale = c(5, 0.5))
+```
+
+We can see that most of the words used to describe the Leaf are positive words. Now we will calculate the actual sentiment scores and put in a table to create a barplot to visualize:
+
+```{r sentiment scores}
+sentiment_data <- iconv(reviews$title)
+s <- get_nrc_sentiment(sentiment_data)
+s$score <- s$positive - s$negative #add column for overall score
+s[1:10,]
+```
+
+```{r create sentiment table}
+review_score <- colSums(s[,]) # sum columns to calculate overall score for each emotion
+print(review_score)
+```
+
+```{r plot sentiment}
+barplot(colSums(s),
+        las = 2,
+        col = rainbow(11),
+        ylab = "Count",
+        main = "Sentiment")
+```
+
+The results show overwhelmingly positive sentiment from Amazon.com reviewers, with "Positive" and "Joy" being the most frequent use of words, and negative feelings being very uncommon. Overall, customers have a positive view of the Leaf.
+
 ## 4. Results
 
 Although this data set has its limitations, we were able to identify some key takeaways that can be valuable in guiding Bellabeat's marketing strategy.
@@ -606,5 +703,5 @@ As part of this analysis, I was asked to select one Bellabeat product to apply m
 
 ## 6. Acknowledgements
 
-1.  \"Fitbit Help.\" *Fitbit MyHelp*, <https://help.fitbit.com/articles/en_US/Help_article/1379.htm.> 
-2.  \"How Much Physical Activity Do Adults Need?\" *Centers for Disease Control and Prevention*, Centers for Disease Control and Prevention, 2 June 2022, <https://www.cdc.gov/physicalactivity/basics/adults/index.htm.> 
+1.  "Fitbit Help." *Fitbit MyHelp*, <https://help.fitbit.com/articles/en_US/Help_article/1379.htm.> 
+2.  "How Much Physical Activity Do Adults Need?" *Centers for Disease Control and Prevention*, Centers for Disease Control and Prevention, 2 June 2022, <https://www.cdc.gov/physicalactivity/basics/adults/index.htm.> 

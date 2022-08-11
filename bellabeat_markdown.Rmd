@@ -577,6 +577,8 @@ sleep
 
 #### Additional Insights
 
+#####  Customer Sentiment
+
 The next thing I wanted to do was to check customer sentiment on a current Bellabeat product to get a feel for their position to market a trusted device. For this, I analyzed 1483 Amazon.com product reviews for the Leaf Urban tracker to get an idea of what customers like about their devices. I found that pulling insights from the review titles gave good insights, since this is where most reviewers give their initial opinions with strong keywords.
 
 To do text analysis, I had to load some additional libraries and import the reviews file:
@@ -671,11 +673,17 @@ barplot(colSums(s),
 
 The results show overwhelmingly positive sentiment from Amazon.com reviewers, with "Positive" and "Joy" being the most frequent use of words, and negative feelings being very uncommon. Overall, customers have a positive view of the Leaf.
 
+##### Ensorsements/Sponsorships
+
+While combing through the web looking for celebrity partnerships and press relating to Bellabeat devices, I could find no significant endorsements. On the other hand, there are numerous articles about celebrities wearing Fitbit, Garmin, and Apple devices.
+
+Celebrity endorsements and sponsorship is a powerful source of brand recognition. When competing with brands like Fitbit, Garmin, and Apple in the health tracking domain, having high profile female celebrity or athlete who believes in the product can enhance credibility, trust, and improve brand awareness. Since customer sentiment toward the devices is already strong among its user base, Bellabeat is in a good position to capture attention and gain market share by investing in high profile sponsorships.
+
 ## 4. Results
 
-Although this data set has its limitations, we were able to identify some key takeaways that can be valuable in guiding Bellabeat's marketing strategy.
+Although the original data set has its limitations, we were able to identify some key takeaways that can be valuable in guiding Bellabeat's marketing strategy.
 
--   We found that people did not wear their devices all the time. Only 76% of users logged activity more than 21 days during the study period, 21% logged activity between 11-20 days, and 3% (one participant), used the device less than 10 days. This data suggests that they may have removed it for a number of reasons which include, but not limited to: battery life, aesthetics, comfort, or forgot to put it on.
+1.  We found that people did not wear their devices all the time. Only 76% of users logged activity more than 21 days during the study period, 21% logged activity between 11-20 days, and 3% (one participant), used the device less than 10 days. This data suggests that they may have removed it for a number of reasons which include, but not limited to: battery life, aesthetics, comfort, or forgot to put it on.
 
 -   Even though only 8 participants logged their weight statistics, we can still take away some important information. People who chose to log their weight burned 7% more calories than those who did not. Features that are manual, complex, or difficult to use or receive feedback are less likely to be used by the customer. The more automated the device can be, by itself or with companion products (like a weigh scale in this case), the higher the potential to reach and motivate the customer.
 

@@ -18,9 +18,10 @@ Chase Carlson
 3.  Analyze the data
     -   Activity by weekday
     -   Hourly activity
-    -   Use Frequency
+    -   Use frequency
     -   Relationships
     -   Sleep data
+    -   Additional insights
 4.  Recommendations
 5.  Acknowledgements
 
@@ -85,7 +86,8 @@ that it does not include demographic information to determine male
 vs. female, and it has a small sample size of just 33 users. At the time
 of this analysis, the data set is over 6 years old. Since public fitness
 tracker data is not readily available, I will be using this data set to
-analyze tracker data.
+analyze tracker data, along with data and insights I am able to gather
+from various web sources such as CDC.gov and Bellabeat’s website.
 
 #### Load libraries
 
@@ -1152,13 +1154,312 @@ sleep
 
 ![](bellabeat_markdown_files/figure-gfm/sleep%20scatterplot-1.png)<!-- -->
 
+#### Additional Insights
+
+##### Customer Sentiment
+
+The next thing I wanted to do was to check customer sentiment on a
+current Bellabeat product to get a feel for their position to market a
+trusted device. For this, I analyzed 1483 Amazon.com product reviews for
+the Leaf Urban tracker to get an idea of what customers like about their
+devices. I found that pulling insights from the review titles gave good
+insights, since this is where most reviewers give their initial opinions
+with strong keywords.
+
+To do text analysis, I had to load some additional libraries and import
+the reviews file:
+
+``` r
+library(reshape2)
+```
+
+    ## 
+    ## Attaching package: 'reshape2'
+
+    ## The following object is masked from 'package:tidyr':
+    ## 
+    ##     smiths
+
+``` r
+library(tm) # text analytics - text mining
+```
+
+    ## Loading required package: NLP
+
+    ## 
+    ## Attaching package: 'NLP'
+
+    ## The following object is masked from 'package:ggplot2':
+    ## 
+    ##     annotate
+
+``` r
+library(wordcloud) # create wordcloud
+```
+
+    ## Loading required package: RColorBrewer
+
+``` r
+library(syuzhet) # to analyze sentiment
+```
+
+    ## 
+    ## Attaching package: 'syuzhet'
+
+    ## The following object is masked from 'package:scales':
+    ## 
+    ##     rescale
+
+``` r
+library(RColorBrewer)
+```
+
+``` r
+reviews <- read_csv("Data Files/reviews.csv", 
+                               col_types = cols(date = col_date(format = "%Y-%M-%d")))
+
+# Check the structure of the file
+str(reviews)
+```
+
+    ## spec_tbl_df [1,483 × 4] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+    ##  $ date  : Date[1:1483], format: "2017-01-25" "2018-01-16" ...
+    ##  $ text  : chr [1:1483] "I really wanted to love this. I have waited a few months before writing this review so that I could really live"| __truncated__ "I am leaving this feedback as I was previously very pleased with my Leaf.  I started having issues with it seve"| __truncated__ "I've been enjoying my Leaf Urban for a few months, now. Overall, I'm very pleased with my purchase! There are a"| __truncated__ "I am loyal to my Bellabeat Leaf! I bought this a few months ago, and have only gone 2 afternoons without it on."| __truncated__ ...
+    ##  $ title : chr [1:1483] "I really wanted to love this." "Only worked for about 6 months and now I'm receiving no customer service support" "Enjoying my new toy" "Perfect Tracker for Me!" ...
+    ##  $ rating: num [1:1483] 2 1 5 5 5 4 2 3 5 5 ...
+    ##  - attr(*, "spec")=
+    ##   .. cols(
+    ##   ..   date = col_date(format = "%Y-%M-%d"),
+    ##   ..   text = col_character(),
+    ##   ..   title = col_character(),
+    ##   ..   rating = col_double()
+    ##   .. )
+    ##  - attr(*, "problems")=<externalptr>
+
+Now that the data is loaded, I will create a corpus to set up for text
+analysis, and cleaned it up by removing punctuation, numbers, stopwords,
+and converted all of the text to lower case:
+
+``` r
+corpus <- iconv(reviews$title)
+
+corpus <- Corpus(VectorSource(corpus))
+
+inspect(corpus[1:5])
+```
+
+    ## <<SimpleCorpus>>
+    ## Metadata:  corpus specific: 1, document level (indexed): 0
+    ## Content:  documents: 5
+    ## 
+    ## [1] I really wanted to love this.                                                                       
+    ## [2] Only worked for about 6 months and now I'm receiving no customer service support                    
+    ## [3] Enjoying my new toy                                                                                 
+    ## [4] Perfect Tracker for Me!                                                                             
+    ## [5] I always wear it clipped to my pants which is the recommended best spot for calculating steps anyway
+
+``` r
+corpus <- tm_map(corpus, tolower) 
+```
+
+    ## Warning in tm_map.SimpleCorpus(corpus, tolower): transformation drops documents
+
+``` r
+corpus <- tm_map(corpus, removePunctuation)
+```
+
+    ## Warning in tm_map.SimpleCorpus(corpus, removePunctuation): transformation drops
+    ## documents
+
+``` r
+corpus <- tm_map(corpus, removeNumbers)
+```
+
+    ## Warning in tm_map.SimpleCorpus(corpus, removeNumbers): transformation drops
+    ## documents
+
+``` r
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+```
+
+    ## Warning in tm_map.SimpleCorpus(corpus, removeWords, stopwords("english")):
+    ## transformation drops documents
+
+``` r
+corpus <- tm_map(corpus, removeWords, c("tracker", "leaf", "bellabeat")) #remove top used words that are not descriptive
+```
+
+    ## Warning in tm_map.SimpleCorpus(corpus, removeWords, c("tracker", "leaf", :
+    ## transformation drops documents
+
+``` r
+inspect(corpus[1:5])
+```
+
+    ## <<SimpleCorpus>>
+    ## Metadata:  corpus specific: 1, document level (indexed): 0
+    ## Content:  documents: 5
+    ## 
+    ## [1]  really wanted  love                                                            
+    ## [2]  worked    months  now im receiving  customer service support                   
+    ## [3] enjoying  new toy                                                               
+    ## [4] perfect                                                                         
+    ## [5]  always wear  clipped   pants    recommended best spot  calculating steps anyway
+
+``` r
+reviews_final <- corpus
+```
+
+Then, I used this corpus to generate a term document to quickly
+visualize top word usage.
+
+``` r
+tdm <- TermDocumentMatrix(reviews_final)
+tdm <- as.matrix(tdm)
+tdm[1:20, 1:5]
+```
+
+    ##              Docs
+    ## Terms         1 2 3 4 5
+    ##   love        1 0 0 0 0
+    ##   really      1 0 0 0 0
+    ##   wanted      1 0 0 0 0
+    ##   customer    0 1 0 0 0
+    ##   months      0 1 0 0 0
+    ##   now         0 1 0 0 0
+    ##   receiving   0 1 0 0 0
+    ##   service     0 1 0 0 0
+    ##   support     0 1 0 0 0
+    ##   worked      0 1 0 0 0
+    ##   enjoying    0 0 1 0 0
+    ##   new         0 0 1 0 0
+    ##   toy         0 0 1 0 0
+    ##   perfect     0 0 0 1 0
+    ##   always      0 0 0 0 1
+    ##   anyway      0 0 0 0 1
+    ##   best        0 0 0 0 1
+    ##   calculating 0 0 0 0 1
+    ##   clipped     0 0 0 0 1
+    ##   pants       0 0 0 0 1
+
+This is the result. Clearly the word “love” was used a lot to describe
+the device in customer reviews, which is a good sign for overall
+sentiment.
+
+``` r
+wordplot <- rowSums(tdm) #sum the number of times each word occurs
+wordplot <- subset(wordplot, wordplot>=25)
+barplot(wordplot, las = 2, col = "blue")
+```
+
+![](bellabeat_markdown_files/figure-gfm/bar%20graph-1.png)<!-- -->
+
+Next, I created a wordcloud to visualize a little differently.
+
+``` r
+wc <- sort(rowSums(tdm), decreasing = T)
+set.seed(2000)
+wordcloud(words = names(wc),
+          freq = wc,
+          max.words = 75,
+          random.order = F,
+          min.freq = 10,
+          colors = brewer.pal(8, "Dark2"),
+          scale = c(5, 0.5))
+```
+
+![](bellabeat_markdown_files/figure-gfm/word%20cloud-1.png)<!-- -->
+
+We can see that most of the words used to describe the Leaf are positive
+words. Now we will calculate the actual sentiment scores and put in a
+table to create a barplot to visualize:
+
+``` r
+sentiment_data <- iconv(reviews$title)
+s <- get_nrc_sentiment(sentiment_data)
+```
+
+    ## Warning: `spread_()` was deprecated in tidyr 1.2.0.
+    ## Please use `spread()` instead.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
+
+``` r
+s$score <- s$positive - s$negative #add column for overall score
+s[1:10,]
+```
+
+    ##    anger anticipation disgust fear joy sadness surprise trust negative positive
+    ## 1      0            0       0    0   1       0        0     0        0        1
+    ## 2      0            1       0    0   1       0        1     0        0        2
+    ## 3      0            1       0    0   1       0        0     1        0        1
+    ## 4      0            1       0    0   1       0        0     1        0        1
+    ## 5      0            0       0    0   0       0        0     1        2        0
+    ## 6      0            0       0    0   0       0        0     0        0        0
+    ## 7      0            0       0    0   0       1        0     0        1        0
+    ## 8      0            0       0    0   0       0        0     0        0        0
+    ## 9      0            0       0    0   1       0        0     1        0        4
+    ## 10     0            0       0    0   0       0        0     0        0        0
+    ##    score
+    ## 1      1
+    ## 2      2
+    ## 3      1
+    ## 4      1
+    ## 5     -2
+    ## 6      0
+    ## 7     -1
+    ## 8      0
+    ## 9      4
+    ## 10     0
+
+``` r
+review_score <- colSums(s[,]) # sum columns to calculate overall score for each emotion
+print(review_score)
+```
+
+    ##        anger anticipation      disgust         fear          joy      sadness 
+    ##           66          300           60           45          818           77 
+    ##     surprise        trust     negative     positive        score 
+    ##          110          373          177         1041          864
+
+``` r
+barplot(colSums(s),
+        las = 2,
+        col = rainbow(11),
+        ylab = "Count",
+        main = "Sentiment")
+```
+
+![](bellabeat_markdown_files/figure-gfm/plot%20sentiment-1.png)<!-- -->
+
+The results show overwhelmingly positive sentiment from Amazon.com
+reviewers, with “Positive” and “Joy” being the most frequent use of
+words, and negative feelings being very uncommon. Overall, customers
+have a positive view of the Leaf.
+
+##### Ensorsements/Sponsorships
+
+While combing through the web looking for celebrity partnerships and
+press relating to Bellabeat devices, I could find no significant
+endorsements. On the other hand, there are numerous articles about
+celebrities wearing Fitbit, Garmin, and Apple devices.
+
+Celebrity endorsements and sponsorship is a powerful source of brand
+recognition. When competing with brands like Fitbit, Garmin, and Apple
+in the health tracking domain, having high profile female celebrity or
+athlete who believes in the product can enhance credibility, trust, and
+improve brand awareness. Since customer sentiment toward the devices is
+already strong among its user base, Bellabeat is in a good position to
+capture attention and gain market share by investing in high profile
+sponsorships.
+
 ## 4. Results
 
-Although this data set has its limitations, we were able to identify
-some key takeaways that can be valuable in guiding Bellabeat’s marketing
-strategy.
+Although the original data set has its limitations, we were able to
+identify some key takeaways that can be valuable in guiding Bellabeat’s
+marketing strategy.
 
--   We found that people did not wear their devices all the time. Only
+1.  We found that people did not wear their devices all the time. Only
     76% of users logged activity more than 21 days during the study
     period, 21% logged activity between 11-20 days, and 3% (one
     participant), used the device less than 10 days. This data suggests
@@ -1238,13 +1539,13 @@ recommendations are made with the Bellabeat membership in mind:
     building more strategic partnerships with popular public figures and
     athletes who endorse their products. Not only does sponsorship help
     with brand exposure, but it also can help build customer trust
-    knowing that influential people are wearing them. 
+    knowing that influential people are wearing them.
 
 ## 6. Acknowledgements
 
-1.  "Fitbit Help." *Fitbit MyHelp*,
+1.  “Fitbit Help.” *Fitbit MyHelp*,
     <https://help.fitbit.com/articles/en_US/Help_article/1379.htm.> 
-2.  "How Much Physical Activity Do Adults Need?" *Centers for Disease
+2.  “How Much Physical Activity Do Adults Need?” *Centers for Disease
     Control and Prevention*, Centers for Disease Control and Prevention,
     2 June 2022,
     <https://www.cdc.gov/physicalactivity/basics/adults/index.htm.> 

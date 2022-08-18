@@ -577,7 +577,7 @@ sleep
 
 #### Additional Insights
 
-#####  Customer Sentiment
+##### Customer Sentiment
 
 The next thing I wanted to do was to check customer sentiment on a current Bellabeat product to get a feel for their position to market a trusted device. For this, I analyzed 1483 Amazon.com product reviews for the Leaf Urban tracker to get an idea of what customers like about their devices. I found that pulling insights from the review titles gave good insights, since this is where most reviewers give their initial opinions with strong keywords.
 

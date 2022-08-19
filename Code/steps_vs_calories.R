@@ -60,7 +60,7 @@ steps_vs_calories <-
   scale_color_manual(labels = c("Did Not Log Weight", "Logged Weight"),
                      values = c("#006C7A", "#FF7043"))
 
-steps_vs_calories
+ggsave("images/steps_vs_calories.png")
 
 # Calculate how much more calories burned for users who logged their weight.
 percent_difference <- (logged_weight_calories/no_weight_calories)*100

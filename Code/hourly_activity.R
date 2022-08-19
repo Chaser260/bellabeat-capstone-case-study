@@ -15,7 +15,8 @@ steps_by_hour <- hourly_steps %>%
   theme_classic() +
   theme(axis.text.x = element_text(angle = 90),
         axis.ticks = element_blank())
-steps_by_hour
+
+ggsave('images/steps_by_hour.png')
 
 # Heatmap of details by "id" __________________________________________________________________________________
 # This heatmap gives a good overview of each user's activity throughout the day. 
@@ -39,4 +40,4 @@ heatmap <- hourly_steps %>%
         legend.margin = margin(l = 10),
         axis.ticks = element_blank())
 
-heatmap
+ggsave('images/activity_heatmap.png')

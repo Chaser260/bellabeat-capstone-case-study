@@ -42,6 +42,8 @@ wordplot <- rowSums(tdm)
 wordplot <- subset(wordplot, wordplot>=25)
 barplot(wordplot, las = 2, col = "blue")
 
+
+
 # Create wordcloud
 wc <- sort(rowSums(tdm), decreasing = T)
 set.seed(2000)
@@ -52,6 +54,7 @@ wordcloud(words = names(wc),
           min.freq = 5,
           colors = brewer.pal(8, "Dark2"),
           scale = c(5, 0.5))
+
 
 # Sentiment scores
 sentiment_data <- iconv(reviews$title)

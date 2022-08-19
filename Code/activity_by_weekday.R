@@ -37,7 +37,7 @@ avg_dist <- daily_activity_filtered %>%
 head(avg_dist) # 5.98 miles
 
 # Visualize average daily activity by weekday. We can see that Monday, Tuesday, and Saturday are the most active days, with Sunday being the least active.
-ggarrange(
+activity_overview <- ggarrange(
   ggplot(weekday_daily_activity) +
     geom_col(aes(weekday, avg_steps), fill = "#205493") +
     labs(y = "average steps", title = "Average Steps") +
@@ -59,3 +59,5 @@ ggarrange(
     geom_hline(yintercept = 5.98) +
     theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
 )
+
+ggsave('images/activity_overview.png')

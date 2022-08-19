@@ -22,11 +22,7 @@ The goal of this analysis is to determine how consumers currently use non-Bellab
 
 Here is a preview of some of the visualizations contained in this analysis. Please see the markdown document for the full analysis:
 
-![](images/paste-CD3D2505.png){width="8in"}
-
-![](images/paste-619A2DC0.png){width="8in"}
-
-![](images/paste-9143B726.png){width="8in"}
+![](images/steps_by_hour.png) ![](images/activity_heatmap.png) ![](images/wordcloud.png)
 
 #### Results
 
